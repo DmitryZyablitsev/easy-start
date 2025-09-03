@@ -1,19 +1,26 @@
-# Variables for building images
-IMAGE_NAME = dimazyablicev/rails_prepared_ubuntu
+# Docker compose commands for Rails application
+COMPOSE_FILE := ./docker/docker-compose.yml
 
-run-container:
-	docker run \
-		-it \
-		-v "$(pwd)/../:/app" \
-		$(IMAGE_NAME) \
-		bash
+# Install dependencies
+rails-bundle:
+	docker compose -f $(COMPOSE_FILE) exec rails_app bash -c "bundle install"
 
-delete-git:
-	@if [ -d ".git" ]; then \
-		echo "Удаляю .git..."; \
-		rm -rf .git; \
-	else \
-		echo ".git не найден, пропускаю"; \
-	fi
+# Create database
+rails-db-create:
+	docker compose -f $(COMPOSE_FILE) exec rails_app bash -c "bundle exec rails db:create"
 
-start: delete-git run-container
+# Migrate database
+rails-db-migrate:
+	docker compose -f $(COMPOSE_FILE) exec rails_app bash -c "bundle exec rails db:migrate"
+
+# Seed database
+rails-db-seed:
+	docker compose -f $(COMPOSE_FILE) exec rails_app bash -c "bundle exec rails db:seed"
+
+# Start containers
+rails-start:
+	make rails-bundle
+	make rails-db-create
+	make rails-db-migrate
+	docker compose -f $(COMPOSE_FILE) exec rails_app bash -c "bundle exec rails s -b 0.0.0.0 -p 3000"
+

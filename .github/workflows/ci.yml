@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  scan_ruby_service_disk:
+    if: contains(github.event.head_commit.message, 'service_disk') || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: disk
+    container: &my_container
+      image: dimazyablicev/disk:amd64 # Ваш кастомный образ
+      options: --user 1001:1001
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: bundle config set --local path '/usr/local/bundle' && bundle install --jobs 4 --retry 3
+
+      - name: Scan for common Rails security vulnerabilities
+        run: bin/brakeman --no-pager
+
+  lint_service_disk:
+    if: contains(github.event.head_commit.message, 'service_disk') || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: disk
+    container: *my_container
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: bundle config set --local path '/usr/local/bundle' && bundle install --jobs 4 --retry 3
+
+      - name: Lint code for consistent style
+        run: bin/rubocop -f github
+
+  test_service_disk:
+    if: contains(github.event.head_commit.message, 'service_disk') || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: disk
+    container: *my_container
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: bundle config set --local path '/usr/local/bundle' && bundle install --jobs 4 --retry 3
+
+      - name: Run tests
+        env:
+          RAILS_ENV: test
+        run: bin/rails db:test:prepare test test:system
+
+      - name: Keep screenshots from failed system tests
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: screenshots_service_disk
+          path: ${{ github.workspace }}/tmp/screenshots
+          if-no-files-found: ignore
