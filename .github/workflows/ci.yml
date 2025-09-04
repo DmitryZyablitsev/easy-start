@@ -17,7 +17,7 @@ jobs:
       options: --user 1001:1001
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install dependencies
         run: bundle config set --local path '/usr/local/bundle' && bundle install --jobs 4 --retry 3
@@ -34,7 +34,7 @@ jobs:
     container: *my_container
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install dependencies
         run: bundle config set --local path '/usr/local/bundle' && bundle install --jobs 4 --retry 3
@@ -51,7 +51,7 @@ jobs:
     container: *my_container
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install dependencies
         run: bundle config set --local path '/usr/local/bundle' && bundle install --jobs 4 --retry 3
